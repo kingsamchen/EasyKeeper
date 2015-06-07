@@ -7,12 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace EasyKeeper
-{
-    class PasswordVault
-    {
-        private class AccountInfo
-        {
+namespace EasyKeeper {
+    internal class PasswordVault {
+        private class AccountInfo {
             public string UserName { get; set; }
             public string Password { get; set; }
 
@@ -44,7 +41,9 @@ namespace EasyKeeper
         public PasswordVault(string storePath, string accessPassword, byte[] data)
         {}
 
-        public void Store()
-        {}
+        public async void StoreAsync()
+        {
+            // TODO: write
+        }
     }
 }
