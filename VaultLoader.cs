@@ -3,7 +3,7 @@
 */
 
 namespace EasyKeeper {
-    internal static class VaultLoader {
+    public static class VaultLoader {
         public static PasswordVault LoadFromProvided(string path, string password)
         {
             return null;
