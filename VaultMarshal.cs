@@ -3,13 +3,32 @@
 */
 
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EasyKeeper {
     public static class VaultMarshal {
-        public static void Marshal(string pwd, AccountStore store, Stream stream)
+        private const uint ProtoclVersion = 1U;
+
+        public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {}
 
-        public static AccountStore Unmarshal(Stream stream, string pwd)
+        public static AccountStore Unmarshal(Stream inStream, string pwd)
+        {
+            return null;
+        }
+
+        private static byte[] AccountStoreToBytes(AccountStore store)
+        {
+            using (MemoryStream mem = new MemoryStream())
+            {
+                IFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(mem, store);
+                return mem.ToArray();
+            }
+        }
+
+        private static AccountStore AccountStoreFromBytes(byte[] rawBytes)
         {
             return null;
         }
