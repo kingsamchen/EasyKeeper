@@ -20,8 +20,7 @@ namespace EasyKeeper {
 
         private static byte[] AccountStoreToBytes(AccountStore store)
         {
-            using (MemoryStream mem = new MemoryStream())
-            {
+            using (MemoryStream mem = new MemoryStream()) {
                 IFormatter formatter = new BinaryFormatter();
                 formatter.Serialize(mem, store);
                 return mem.ToArray();
@@ -30,7 +29,11 @@ namespace EasyKeeper {
 
         private static AccountStore AccountStoreFromBytes(byte[] rawBytes)
         {
-            return null;
+            using (MemoryStream mem = new MemoryStream(rawBytes)) {
+                IFormatter formatter = new BinaryFormatter();
+                var accountStore = formatter.Deserialize(mem) as AccountStore;
+                return accountStore;
+            }
         }
     }
 }
