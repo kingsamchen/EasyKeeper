@@ -2,6 +2,7 @@
  @ Kingsley Chen
 */
 
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -28,7 +29,13 @@ namespace EasyKeeper {
         private const uint ProtoclVersion = 1U;
 
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
-        {}
+        {
+            var storeDataBytes = AccountStoreToBytes(store);
+            var storeDataDigest = ComputeDigest(storeDataBytes);
+            // TODO: get encrypted store data bytes.
+            // TODO: compute checksum(MD5) for altogegher data.
+            // TODO: write to `outStream`.
+        }
 
         public static AccountStore Unmarshal(Stream inStream, string pwd)
         {
@@ -53,12 +60,44 @@ namespace EasyKeeper {
             }
         }
 
+        private static byte[] EncryptStoreData(byte[] storeData, string userPassword)
+        {
+            var keyGen = CreateKeyGenForCrypto(userPassword);
+            using (Aes aes = new AesManaged()) {
+                aes.Key = keyGen.GetBytes(32);
+                aes.IV = keyGen.GetBytes(16);
+                using (var mem = new MemoryStream())
+                using (var crypto = new CryptoStream(mem, aes.CreateEncryptor(),
+                                                     CryptoStreamMode.Write)) {
+                    crypto.Write(storeData, 0, storeData.Length);
+                    crypto.Close();
+
+                    return mem.ToArray();
+                }
+            }
+        }
+
         private static Digest ComputeDigest(byte[] rawBytes)
         {
             using (SHA1 sha = new SHA1Managed()) {
                 var hash = sha.ComputeHash(rawBytes);
                 return new Digest(hash);
             }
+        }
+
+        private static Rfc2898DeriveBytes CreateKeyGenForCrypto(string userPassword)
+        {
+            const int iterationCount = 1000;
+            const byte mask = 0x44;
+            var salt = new byte[8];
+            var saltCode = BitConverter.GetBytes(userPassword.GetHashCode());
+
+            saltCode.CopyTo(salt, 0);
+            for (int i = 0; i < 4; ++i) {
+                salt[i + 4] = (byte)(salt[i] ^ mask);
+            }
+
+            return new Rfc2898DeriveBytes(userPassword, salt, iterationCount);
         }
     }
 }
