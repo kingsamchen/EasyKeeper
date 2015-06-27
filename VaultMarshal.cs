@@ -32,10 +32,16 @@ namespace EasyKeeper {
 
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {
-            var storeDataBytes = AccountStoreToBytes(store);
-            // TODO: get encrypted store data bytes.
-            // TODO: compute checksum(MD5) for altogegher data.
-            // TODO: write to `outStream`.
+            var encryptedData = EncryptStoreData(AccountStoreToBytes(store), pwd);
+            var dataChecksum = ComputeChecksum(BitConverter.GetBytes(ProtocolVersion)
+                                                           .Concat(encryptedData)
+                                                           .ToArray());
+
+            using (var writer = new BinaryWriter(outStream)) {
+                writer.Write(dataChecksum.Data);
+                writer.Write(ProtocolVersion);
+                writer.Write(encryptedData);
+            }
         }
 
         public static AccountStore Unmarshal(Stream inStream, string pwd)
