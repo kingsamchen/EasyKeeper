@@ -4,15 +4,15 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 
-using MD5 = System.Security.Cryptography.MD5;
-
 namespace EasyKeeper {
     public static class VaultMarshal {
         private class Checksum {
+            public const int HashSizeInBytes = 128 / 8;
             private readonly byte[] _data;
 
             public Checksum(byte[] data)
@@ -28,7 +28,7 @@ namespace EasyKeeper {
             }
         }
 
-        private const uint ProtoclVersion = 1U;
+        private const uint ProtocolVersion = 1U;
 
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {
