@@ -8,12 +8,14 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 
+using MD5 = System.Security.Cryptography.MD5;
+
 namespace EasyKeeper {
     public static class VaultMarshal {
-        private class Digest {
+        private class Checksum {
             private readonly byte[] _data;
 
-            public Digest(byte[] data)
+            public Checksum(byte[] data)
             {
                 _data = data;
             }
@@ -31,7 +33,6 @@ namespace EasyKeeper {
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {
             var storeDataBytes = AccountStoreToBytes(store);
-            var storeDataDigest = ComputeDigest(storeDataBytes);
             // TODO: get encrypted store data bytes.
             // TODO: compute checksum(MD5) for altogegher data.
             // TODO: write to `outStream`.
@@ -77,12 +78,11 @@ namespace EasyKeeper {
             }
         }
 
-        private static Digest ComputeDigest(byte[] rawBytes)
+        private static Checksum ComputeChecksum(byte[] rawBytes)
         {
-            using (SHA1 sha = new SHA1Managed()) {
-                var hash = sha.ComputeHash(rawBytes);
-                return new Digest(hash);
-            }
+            MD5 md5 = MD5.Create();
+            var hash = md5.ComputeHash(rawBytes);
+            return new Checksum(hash);
         }
 
         private static Rfc2898DeriveBytes CreateKeyGenForCrypto(string userPassword)
