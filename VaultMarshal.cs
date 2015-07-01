@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 
 namespace EasyKeeper {
     public static class VaultMarshal {
-        private class Checksum {
+        private class Checksum : IEquatable<Checksum> {
             public const int HashSizeInBytes = 128 / 8;
             private readonly byte[] _data;
 
@@ -25,6 +25,49 @@ namespace EasyKeeper {
                 get {
                     return _data;
                 }
+            }
+
+            public bool Equals(Checksum other)
+            {
+                if (ReferenceEquals(null, other)) {
+                    return false;
+                }
+
+                if (ReferenceEquals(this, other)) {
+                    return true;
+                }
+
+                return _data.SequenceEqual(other._data);
+            }
+
+            public override bool Equals(object other)
+            {
+                if (ReferenceEquals(null, other)) {
+                    return false;
+                }
+
+                if (ReferenceEquals(this, other)) {
+                    return true;
+                }
+
+                var otherChecksum = other as Checksum;
+
+                return (otherChecksum != null) && Equals(otherChecksum);
+            }
+
+            public override int GetHashCode()
+            {
+                return (_data != null ? _data.GetHashCode() : 0);
+            }
+
+            public static bool operator==(Checksum lhs, Checksum rhs)
+            {
+                return Equals(lhs, rhs);
+            }
+
+            public static bool operator!=(Checksum lhs, Checksum rhs)
+            {
+                return !(lhs == rhs);
             }
         }
 
