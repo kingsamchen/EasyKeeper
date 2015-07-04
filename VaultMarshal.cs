@@ -1,4 +1,4 @@
-﻿/*
+/*
  @ Kingsley Chen
 */
 
@@ -89,7 +89,32 @@ namespace EasyKeeper {
 
         public static AccountStore Unmarshal(Stream inStream, string pwd)
         {
-            return null;
+            using (var reader = new BinaryReader(inStream)) {
+                var checksum = new Checksum(reader.ReadBytes(Checksum.HashSizeInBytes));
+                var protocolVersion = reader.ReadUInt32();
+                // Now, we can read the whole rest off the stream.
+                byte[] encryptedData = null;
+                using (var mem = new MemoryStream()) {
+                    reader.BaseStream.CopyTo(mem);
+                    encryptedData = mem.ToArray();
+                }
+
+                // Check whether data has been corrupted.
+                var computedChecksum
+                        = ComputeChecksum(BitConverter.GetBytes(protocolVersion)
+                                                      .Concat(encryptedData)
+                                                      .ToArray());
+                if (checksum != computedChecksum) {
+                    throw new DataCorruptionException("Checksums don't match!");
+                }
+
+                // TODO: handle decryption exception caused by wrong password here
+                var storeData = DecryptStoreData(encryptedData, pwd);
+
+                var store = AccountStoreFromBytes(storeData);
+
+                return store;
+            }
         }
 
         private static byte[] AccountStoreToBytes(AccountStore store)
@@ -120,7 +145,24 @@ namespace EasyKeeper {
                 using (var crypto = new CryptoStream(mem, aes.CreateEncryptor(),
                                                      CryptoStreamMode.Write)) {
                     crypto.Write(storeData, 0, storeData.Length);
-                    crypto.Close();
+                    crypto.Dispose();
+
+                    return mem.ToArray();
+                }
+            }
+        }
+
+        private static byte[] DecryptStoreData(byte[] encrypted, string userPassword)
+        {
+            var keyGen = CreateKeyGenForCrypto(userPassword);
+            using (Aes aes = new AesManaged()) {
+                aes.Key = keyGen.GetBytes(32);
+                aes.IV = keyGen.GetBytes(16);
+                using (var mem = new MemoryStream())
+                using (var crypto = new CryptoStream(mem, aes.CreateDecryptor(),
+                                                     CryptoStreamMode.Write)) {
+                    crypto.Write(encrypted, 0, encrypted.Length);
+                    crypto.Dispose();
 
                     return mem.ToArray();
                 }
@@ -148,5 +190,18 @@ namespace EasyKeeper {
 
             return new Rfc2898DeriveBytes(userPassword, salt, iterationCount);
         }
+    }
+
+    public class DataCorruptionException : Exception {
+        public DataCorruptionException()
+        {}
+
+        public DataCorruptionException(string message)
+            : base(message)
+        {}
+
+        public DataCorruptionException(string message, Exception innerException)
+            : base(message, innerException)
+        {}
     }
 }
