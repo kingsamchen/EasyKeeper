@@ -53,7 +53,7 @@ namespace EasyKeeper {
                                                                         .Concat(encryptedData)
                                                                         .ToArray());
                 if (checksumRead != checksum) {
-                    throw new DataCorruptionException("Checksums don't match!");
+                    throw new DataCorruptedException("Checksums don't match!");
                 }
 
                 // TODO: handle decryption exception caused by wrong password here
@@ -61,7 +61,7 @@ namespace EasyKeeper {
 
                 var signature = Signature.FromRawData(storeData, Encoding.UTF8.GetBytes(pwd));
                 if (signatureRead != signature) {
-                    // TODO: throw wrong password exception.
+                    throw new IncorrectPassword("Password is incorrect!");
                 }
 
                 var store = AccountStoreFromBytes(storeData);
@@ -137,15 +137,28 @@ namespace EasyKeeper {
         }
     }
 
-    public class DataCorruptionException : Exception {
-        public DataCorruptionException()
+    public class DataCorruptedException : Exception {
+        public DataCorruptedException()
         {}
 
-        public DataCorruptionException(string message)
+        public DataCorruptedException(string message)
             : base(message)
         {}
 
-        public DataCorruptionException(string message, Exception innerException)
+        public DataCorruptedException(string message, Exception innerException)
+            : base(message, innerException)
+        {}
+    }
+
+    public class IncorrectPassword : Exception {
+        public IncorrectPassword()
+        {}
+
+        public IncorrectPassword(string message)
+            : base(message)
+        {}
+
+        public IncorrectPassword(string message, Exception innerException)
             : base(message, innerException)
         {}
     }
