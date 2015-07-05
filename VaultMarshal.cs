@@ -23,17 +23,15 @@ namespace EasyKeeper {
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {
             var storeData = AccountStoreToBytes(store);
-            var dataSignature = Signature.FromRawData(storeData, Encoding.UTF8.GetBytes(pwd));
             var encryptedData = EncryptStoreData(storeData, pwd);
-            var dataChecksum = Checksum.FromRawData(BitConverter.GetBytes(ProtocolVersion)
-                                                                .Concat(dataSignature.Data)
+            var dataSignature = Signature.FromRawData(encryptedData, Encoding.UTF8.GetBytes(pwd));
+            var payload = BitConverter.GetBytes(ProtocolVersion).Concat(dataSignature.Data)
                                                                 .Concat(encryptedData)
-                                                                .ToArray());
+                                                                .ToArray();
+            var dataChecksum = Checksum.FromRawData(payload);
             using (var writer = new BinaryWriter(outStream)) {
                 writer.Write(dataChecksum.Data);
-                writer.Write(ProtocolVersion);
-                writer.Write(dataSignature.Data);
-                writer.Write(encryptedData);
+                writer.Write(payload);
             }
         }
 
@@ -59,14 +57,15 @@ namespace EasyKeeper {
                     throw new DataCorruptedException("Checksums don't match!");
                 }
 
-                // TODO: handle decryption exception caused by wrong password here
-                var storeData = DecryptStoreData(encryptedData, pwd);
-
-                var signature = Signature.FromRawData(storeData, Encoding.UTF8.GetBytes(pwd));
+                var signature = Signature.FromRawData(encryptedData, Encoding.UTF8.GetBytes(pwd));
                 if (signatureRead != signature) {
                     throw new IncorrectPassword("Password is incorrect!");
                 }
 
+                // Incorrect password would cause the following invocation to throw an exception,
+                // but because it could happen only if somebody hacked the code and bypassed the
+                // authentication, so, just let it be.
+                var storeData = DecryptStoreData(encryptedData, pwd);
                 var store = AccountStoreFromBytes(storeData);
 
                 return store;
@@ -98,7 +97,7 @@ namespace EasyKeeper {
             using (var encryptor = new CryptoStream(mem, crypto.CreateEncryptor(),
                                                     CryptoStreamMode.Write)) {
                 encryptor.Write(storeData, 0, storeData.Length);
-                encryptor.Dispose();
+                encryptor.FlushFinalBlock();
 
                 return mem.ToArray();
             }
@@ -111,7 +110,7 @@ namespace EasyKeeper {
             using (var decryptor = new CryptoStream(mem, crypto.CreateDecryptor(),
                                                     CryptoStreamMode.Write)) {
                 decryptor.Write(encrypted, 0, encrypted.Length);
-                decryptor.Dispose();
+                decryptor.FlushFinalBlock();
 
                 return mem.ToArray();
             }
