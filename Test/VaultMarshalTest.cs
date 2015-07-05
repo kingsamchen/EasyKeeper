@@ -3,8 +3,10 @@
 */
 
 using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using EasyKeeper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Checksum = EasyKeeper.Validator<EasyKeeper.ChecksumPolicy>;
@@ -41,6 +43,52 @@ namespace Test {
 
             Assert.AreNotEqual(Signature.FromRawData(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(pwd)),
                                Signature.FromRawData(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(anotherPwd)));
+        }
+
+        [TestMethod]
+        public void TestMarshal()
+        {
+            string pwd = "kc123";
+            AccountStore store = new AccountStore();
+            byte[] data = null;
+
+            using (MemoryStream mem = new MemoryStream()) {
+                VaultMarshal.Marshal(pwd, store, mem);
+                data = mem.ToArray();
+            }
+
+            Assert.AreNotEqual(null, data);
+
+            TryUnmarsal(data, pwd);
+
+            try {
+                var corrupted = new byte[data.Length];
+                data.CopyTo(corrupted, 0);
+                Assert.AreNotSame(corrupted, data);
+                corrupted[0] ^= 0x44;
+                corrupted[corrupted.Length - 2] ^= 0x44;
+
+                TryUnmarsal(corrupted, pwd);
+                Assert.Fail("Checksum didn't work");
+            } catch(DataCorruptedException ex) {
+                // keep silence
+            }
+
+            try {
+                string fakePwd = "kckckc";
+                TryUnmarsal(data, fakePwd);
+                Assert.Fail("HMAC validation didn't work");
+            } catch (IncorrectPassword ex) {
+                // keep silence
+            }
+        }
+
+        private AccountStore TryUnmarsal(byte[] data, string pwd)
+        {
+            using (MemoryStream mem = new MemoryStream(data)) {
+                var storeGet = VaultMarshal.Unmarshal(mem, pwd);
+                return storeGet;
+            }
         }
     }
 }
