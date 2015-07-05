@@ -8,81 +8,28 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Text;
+
+using Checksum = EasyKeeper.Validator<EasyKeeper.ChecksumPolicy>;
+using Signature = EasyKeeper.Validator<EasyKeeper.SignaturePolicy>;
 
 namespace EasyKeeper {
     public static class VaultMarshal {
-        private class Checksum : IEquatable<Checksum> {
-            public const int HashSizeInBytes = 128 / 8;
-            private readonly byte[] _data;
-
-            public Checksum(byte[] data)
-            {
-                _data = data;
-            }
-
-            public byte[] Data
-            {
-                get {
-                    return _data;
-                }
-            }
-
-            public bool Equals(Checksum other)
-            {
-                if (ReferenceEquals(null, other)) {
-                    return false;
-                }
-
-                if (ReferenceEquals(this, other)) {
-                    return true;
-                }
-
-                return _data.SequenceEqual(other._data);
-            }
-
-            public override bool Equals(object other)
-            {
-                if (ReferenceEquals(null, other)) {
-                    return false;
-                }
-
-                if (ReferenceEquals(this, other)) {
-                    return true;
-                }
-
-                var otherChecksum = other as Checksum;
-
-                return (otherChecksum != null) && Equals(otherChecksum);
-            }
-
-            public override int GetHashCode()
-            {
-                return (_data != null ? _data.GetHashCode() : 0);
-            }
-
-            public static bool operator==(Checksum lhs, Checksum rhs)
-            {
-                return Equals(lhs, rhs);
-            }
-
-            public static bool operator!=(Checksum lhs, Checksum rhs)
-            {
-                return !(lhs == rhs);
-            }
-        }
-
         private const uint ProtocolVersion = 1U;
 
         public static void Marshal(string pwd, AccountStore store, Stream outStream)
         {
-            var encryptedData = EncryptStoreData(AccountStoreToBytes(store), pwd);
-            var dataChecksum = ComputeChecksum(BitConverter.GetBytes(ProtocolVersion)
-                                                           .Concat(encryptedData)
-                                                           .ToArray());
-
+            var storeData = AccountStoreToBytes(store);
+            var dataSignature = Signature.FromRawData(storeData, Encoding.UTF8.GetBytes(pwd));
+            var encryptedData = EncryptStoreData(storeData, pwd);
+            var dataChecksum = Checksum.FromRawData(BitConverter.GetBytes(ProtocolVersion)
+                                                                .Concat(dataSignature.Data)
+                                                                .Concat(encryptedData)
+                                                                .ToArray());
             using (var writer = new BinaryWriter(outStream)) {
                 writer.Write(dataChecksum.Data);
                 writer.Write(ProtocolVersion);
+                writer.Write(dataSignature.Data);
                 writer.Write(encryptedData);
             }
         }
@@ -90,8 +37,9 @@ namespace EasyKeeper {
         public static AccountStore Unmarshal(Stream inStream, string pwd)
         {
             using (var reader = new BinaryReader(inStream)) {
-                var checksum = new Checksum(reader.ReadBytes(Checksum.HashSizeInBytes));
+                var checksumRead = Checksum.FromData(reader.ReadBytes(Checksum.HashSizeInBytes));
                 var protocolVersion = reader.ReadUInt32();
+                var signatureRead = Signature.FromData(reader.ReadBytes(Signature.HashSizeInBytes));
                 // Now, we can read the whole rest off the stream.
                 byte[] encryptedData = null;
                 using (var mem = new MemoryStream()) {
@@ -100,16 +48,21 @@ namespace EasyKeeper {
                 }
 
                 // Check whether data has been corrupted.
-                var computedChecksum
-                        = ComputeChecksum(BitConverter.GetBytes(protocolVersion)
-                                                      .Concat(encryptedData)
-                                                      .ToArray());
-                if (checksum != computedChecksum) {
+                var checksum = Checksum.FromRawData(BitConverter.GetBytes(protocolVersion)
+                                                                        .Concat(signatureRead.Data)
+                                                                        .Concat(encryptedData)
+                                                                        .ToArray());
+                if (checksumRead != checksum) {
                     throw new DataCorruptionException("Checksums don't match!");
                 }
 
                 // TODO: handle decryption exception caused by wrong password here
                 var storeData = DecryptStoreData(encryptedData, pwd);
+
+                var signature = Signature.FromRawData(storeData, Encoding.UTF8.GetBytes(pwd));
+                if (signatureRead != signature) {
+                    // TODO: throw wrong password exception.
+                }
 
                 var store = AccountStoreFromBytes(storeData);
 
@@ -137,46 +90,31 @@ namespace EasyKeeper {
 
         private static byte[] EncryptStoreData(byte[] storeData, string userPassword)
         {
-            var keyGen = CreateKeyGenForCrypto(userPassword);
-            using (Aes aes = new AesManaged()) {
-                aes.Key = keyGen.GetBytes(32);
-                aes.IV = keyGen.GetBytes(16);
-                using (var mem = new MemoryStream())
-                using (var crypto = new CryptoStream(mem, aes.CreateEncryptor(),
-                                                     CryptoStreamMode.Write)) {
-                    crypto.Write(storeData, 0, storeData.Length);
-                    crypto.Dispose();
+            using (var crypto = CreateCrypto(userPassword))
+            using (var mem = new MemoryStream())
+            using (var encryptor = new CryptoStream(mem, crypto.CreateEncryptor(),
+                                                    CryptoStreamMode.Write)) {
+                encryptor.Write(storeData, 0, storeData.Length);
+                encryptor.Dispose();
 
-                    return mem.ToArray();
-                }
+                return mem.ToArray();
             }
         }
 
         private static byte[] DecryptStoreData(byte[] encrypted, string userPassword)
         {
-            var keyGen = CreateKeyGenForCrypto(userPassword);
-            using (Aes aes = new AesManaged()) {
-                aes.Key = keyGen.GetBytes(32);
-                aes.IV = keyGen.GetBytes(16);
-                using (var mem = new MemoryStream())
-                using (var crypto = new CryptoStream(mem, aes.CreateDecryptor(),
-                                                     CryptoStreamMode.Write)) {
-                    crypto.Write(encrypted, 0, encrypted.Length);
-                    crypto.Dispose();
+            using (var crypto = CreateCrypto(userPassword))
+            using (var mem = new MemoryStream())
+            using (var decryptor = new CryptoStream(mem, crypto.CreateDecryptor(),
+                                                    CryptoStreamMode.Write)) {
+                decryptor.Write(encrypted, 0, encrypted.Length);
+                decryptor.Dispose();
 
-                    return mem.ToArray();
-                }
+                return mem.ToArray();
             }
         }
 
-        private static Checksum ComputeChecksum(byte[] rawBytes)
-        {
-            MD5 md5 = MD5.Create();
-            var hash = md5.ComputeHash(rawBytes);
-            return new Checksum(hash);
-        }
-
-        private static Rfc2898DeriveBytes CreateKeyGenForCrypto(string userPassword)
+        private static Aes CreateCrypto(string userPassword)
         {
             const int iterationCount = 1000;
             const byte mask = 0x44;
@@ -188,7 +126,14 @@ namespace EasyKeeper {
                 salt[i + 4] = (byte)(salt[i] ^ mask);
             }
 
-            return new Rfc2898DeriveBytes(userPassword, salt, iterationCount);
+            const int keySize = 32;
+            const int ivSize = 16;
+            var keyGen = new Rfc2898DeriveBytes(userPassword, salt, iterationCount);
+            Aes aes = new AesManaged();
+            aes.Key = keyGen.GetBytes(keySize);
+            aes.IV = keyGen.GetBytes(ivSize);
+
+            return aes;
         }
     }
 
@@ -203,5 +148,134 @@ namespace EasyKeeper {
         public DataCorruptionException(string message, Exception innerException)
             : base(message, innerException)
         {}
+    }
+
+    interface IHashPolicy {
+        byte[] ComputeHash(byte[] rawData);
+        byte[] ComputeHash(byte[] rawData, byte[] key);
+        int GetHashSize();
+    }
+
+    class ChecksumPolicy : IHashPolicy {
+        public byte[] ComputeHash(byte[] rawData)
+        {
+            var md5 = MD5.Create();
+            return md5.ComputeHash(rawData);
+        }
+
+        public byte[] ComputeHash(byte[] rawData, byte[] key)
+        {
+            throw new NotSupportedException();
+        }
+
+        public int GetHashSize()
+        {
+            return 128;
+        }
+    }
+
+    class SignaturePolicy : IHashPolicy {
+        public byte[] ComputeHash(byte[] rawData)
+        {
+            throw new NotSupportedException();
+        }
+
+        public byte[] ComputeHash(byte[] rawData, byte[] key)
+        {
+            using (var hmac = new HMACSHA256(key)) {
+                return hmac.ComputeHash(rawData);
+            }
+        }
+
+        public int GetHashSize()
+        {
+            return 256;
+        }
+    }
+
+    class Validator<T> : IEquatable<Validator<T>> where T : IHashPolicy, new() {
+        private readonly byte[] _data;
+
+        private Validator(byte[] data)
+        {
+            _data = data;
+        }
+
+        public static Validator<T> FromData(byte[] data)
+        {
+            return new Validator<T>(data);
+        }
+
+        public static Validator<T> FromRawData(byte[] rawData)
+        {
+            var policy = new T();
+            var hashed = policy.ComputeHash(rawData);
+
+            return new Validator<T>(hashed);
+        }
+
+        public static Validator<T> FromRawData(byte[] rawData, byte[] key)
+        {
+            var policy = new T();
+            var hashed = policy.ComputeHash(rawData, key);
+
+            return new Validator<T>(hashed);
+        }
+
+        public byte[] Data
+        {
+            get {
+                return _data;
+            }
+        }
+
+        public static int HashSizeInBytes
+        {
+            get {
+                var policy = new T();
+                return policy.GetHashSize() / 8;
+            }
+        }
+
+        public bool Equals(Validator<T> other)
+        {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return _data.SequenceEqual(other._data);
+        }
+
+        public override bool Equals(object other)
+        {
+            return (other is Validator<T>) && Equals((Validator<T>)other);
+        }
+
+        public override int GetHashCode()
+        {
+            return (_data != null ? _data.GetHashCode() : 0);
+        }
+
+        public static bool operator==(Validator<T> lhs, Validator<T> rhs)
+        {
+            if (ReferenceEquals(lhs, rhs)) {
+                return true;
+            }
+
+            if ((object)lhs == null || (object)rhs == null) {
+                return false;
+            }
+
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator!=(Validator<T> lhs, Validator<T> rhs)
+        {
+            return !(lhs == rhs);
+        }
     }
 }
