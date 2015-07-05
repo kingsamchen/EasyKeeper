@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
@@ -12,6 +13,8 @@ using System.Text;
 
 using Checksum = EasyKeeper.Validator<EasyKeeper.ChecksumPolicy>;
 using Signature = EasyKeeper.Validator<EasyKeeper.SignaturePolicy>;
+
+[assembly:InternalsVisibleTo("Test")]
 
 namespace EasyKeeper {
     public static class VaultMarshal {
