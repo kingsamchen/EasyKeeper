@@ -42,7 +42,7 @@ namespace EasyKeeper {
                 var protocolVersion = reader.ReadUInt32();
                 var signatureRead = Signature.FromData(reader.ReadBytes(Signature.HashSizeInBytes));
                 // Now, we can read the whole rest off the stream.
-                byte[] encryptedData = null;
+                byte[] encryptedData;
                 using (var mem = new MemoryStream()) {
                     reader.BaseStream.CopyTo(mem);
                     encryptedData = mem.ToArray();

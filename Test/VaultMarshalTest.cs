@@ -70,7 +70,7 @@ namespace Test {
 
                 TryUnmarsal(corrupted, pwd);
                 Assert.Fail("Checksum didn't work");
-            } catch(DataCorruptedException ex) {
+            } catch(DataCorruptedException) {
                 // keep silence
             }
 
@@ -78,7 +78,7 @@ namespace Test {
                 string fakePwd = "kckckc";
                 TryUnmarsal(data, fakePwd);
                 Assert.Fail("HMAC validation didn't work");
-            } catch (IncorrectPassword ex) {
+            } catch (IncorrectPassword) {
                 // keep silence
             }
         }
