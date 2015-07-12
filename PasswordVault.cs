@@ -35,5 +35,20 @@ namespace EasyKeeper {
                 }
             });
         }
+
+        public bool AddAccountInfo(string label, string username, string password)
+        {
+            return _accountStore.AddAccountInfo(label, username, password);
+        }
+
+        public void RemoveAccountInfo(string label)
+        {
+            _accountStore.RemoveAccountInfo(label);
+        }
+
+        public void UpdateAccountInfo(string label, string newUsername, string newPassword)
+        {
+            _accountStore.UpdateAccountInfo(label, newUsername, newPassword);
+        }
     }
 }
