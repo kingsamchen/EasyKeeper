@@ -2,11 +2,15 @@
  @ Kingsley Chen
 */
 
+using System.IO;
+
 namespace EasyKeeper {
     public static class VaultLoader {
         public static PasswordVault FromProvided(string path, string password)
         {
-            return null;
+            using (var fs = File.Open(path, FileMode.Open)) {
+                return new PasswordVault(path, password, fs);
+            }
         }
 
         public static PasswordVault FromNew(string path, string password)

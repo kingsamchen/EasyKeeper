@@ -1,12 +1,8 @@
-﻿/*
+/*
  @ Kingsley Chen
 */
 
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EasyKeeper {
@@ -15,9 +11,7 @@ namespace EasyKeeper {
         private string _accessPassword;
         private AccountStore _accountStore;
 
-        /// <summary>
-        /// Builds a brand new vault.
-        /// </summary>
+        // Builds a brand new vault.
         public PasswordVault(string storePath, string accessPassword)
         {
             _path = storePath;
@@ -25,12 +19,13 @@ namespace EasyKeeper {
             _accountStore = new AccountStore();
         }
 
-        /// <summary>
-        /// Builds a vault from given data.
-        /// </summary>
-        /// <param name="data"></param>
-        public PasswordVault(string storePath, string accessPassword, byte[] data)
-        {}
+        // Builds a vault from a given source.
+        public PasswordVault(string storePath, string accessPassword, Stream stream)
+        {
+            _path = storePath;
+            _accessPassword = accessPassword;
+            _accountStore = VaultMarshal.Unmarshal(stream, accessPassword);
+        }
 
         public void StoreAsync()
         {
