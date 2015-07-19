@@ -1,0 +1,15 @@
+<Window x:Class="EasyKeeper.LoggingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EasyKeeper - Open a Vault" Height="325" Width="512" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <ComboBox x:Name="CboVaultLocation" HorizontalAlignment="Left" Margin="176,62,0,0" VerticalAlignment="Top" Width="219" Height="29" IsSynchronizedWithCurrentItem="False" VerticalContentAlignment="Center">
+            <ComboBoxItem Content="Choose a Location..." FontSize="14" FontStyle="Italic"/>
+        </ComboBox>
+        <Label Content="Vault Location" HorizontalAlignment="Left" Margin="56,62,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold"/>
+        <Label Content="Password" HorizontalAlignment="Left" Margin="88,115,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold" RenderTransformOrigin="0.514,2"/>
+        <PasswordBox x:Name="TxtPassword" HorizontalAlignment="Left" Margin="176,115,0,0" VerticalAlignment="Top" Width="219" Height="29" VerticalContentAlignment="Center"/>
+        <Button x:Name="BtnOpenVault" Content="Enter" Margin="281,195,111,58" RenderTransformOrigin="0.513,0.857" FontSize="14"/>
+        <Button x:Name="BtnNewVault" Content="New Vault" Margin="109,195,283,58" RenderTransformOrigin="0.513,0.857" FontSize="14"/>
+    </Grid>
+</Window>
