@@ -15,24 +15,22 @@ using System.Windows.Controls;
 
 using Win32 = Microsoft.Win32;
 
-namespace EasyKeeper
-{
+namespace EasyKeeper {
     /// <summary>
-    /// Interaction logic for LoggingWindow.xaml
+    /// Interaction logic for LoginWindow.xaml
     /// </summary>
-    public partial class LoggingWindow : Window
-    {
+    public partial class LoginWindow : Window {
         private static readonly string HistoryFilePath;
         private List<string> _vaultLocations;
         private ObservableCollection<ComboBoxItem> _locationBoxItems;
 
-        static LoggingWindow()
+        static LoginWindow()
         {
             var appDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             HistoryFilePath = Path.Combine(appDir, @"EasyKeeper\vault_history");
         }
 
-        public LoggingWindow()
+        public LoginWindow()
         {
             InitializeComponent();
 
@@ -110,6 +108,18 @@ namespace EasyKeeper
 
         private void NewVault_Click(object sender, RoutedEventArgs e)
         {
+            var dlg = new Win32.SaveFileDialog {
+                DefaultExt = ".ekp",
+                Filter = "EasyKeeper vault (*.ekp)|*.ekp"
+            };
+
+            bool? result = dlg.ShowDialog();
+            if (result != true) {
+                return;
+            }
+
+            var newVaultPath = dlg.FileName;
+            Debug.WriteLine(newVaultPath);
         }
     }
 }
