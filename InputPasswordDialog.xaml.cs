@@ -1,25 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿/*
+ @ 0xCCCCCCCC
+*/
+
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace EasyKeeper {
     /// <summary>
     /// Interaction logic for InputPasswordDialog.xaml
     /// </summary>
     public partial class InputPasswordDialog : Window {
+        public string NewVaultPassword { get; private set; }
+
         public InputPasswordDialog()
         {
             InitializeComponent();
+        }
+
+        private void SetupButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (VaultPasswordBox.Password == string.Empty ||
+                ConfirmedVaultPasswordBox.Password == string.Empty) {
+                MessageBox.Show("You are supposed to enter you password!", "Invalid Password",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (VaultPasswordBox.Password != ConfirmedVaultPasswordBox.Password) {
+                MessageBox.Show("Two passwords don't match!", "Wrong Confirmed Password",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            NewVaultPassword = VaultPasswordBox.Password;
+
+            DialogResult = true;
         }
     }
 }
