@@ -6,6 +6,9 @@ using System.Windows;
 using System.Windows.Controls;
 
 namespace EasyKeeper {
+    // This class adds watermark text in PasswordBox controls.
+    // However, it is literally plausible to use this class for normal TextBox controls,
+    // though there might be another more simpler approach.
     public class WaterMarkText : DependencyObject {
         public static readonly DependencyProperty IsMonitoringProperty =
             DependencyProperty.RegisterAttached("IsMonitoring",
@@ -93,7 +96,7 @@ namespace EasyKeeper {
 
         private static void PasswordChanged(object sender, RoutedEventArgs args)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
+            var passwordBox = sender as PasswordBox;
             if (passwordBox != null) {
                 SetTextLength(passwordBox, passwordBox.Password.Length);
             }
