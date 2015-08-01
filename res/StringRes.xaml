@@ -7,4 +7,5 @@
     <sys:String x:Key="VaultNotFound">
         The vault is not found on your disk. Remove it from history?
     </sys:String>
+    <sys:String x:Key="NoPasswordGiven">Please enter your password!</sys:String>
 </ResourceDictionary>

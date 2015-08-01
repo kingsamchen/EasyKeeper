@@ -9,20 +9,38 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
 using Win32 = Microsoft.Win32;
 
+
 namespace EasyKeeper {
     /// <summary>
     /// Interaction logic for LoginWindow.xaml
     /// </summary>
-    public partial class LoginWindow : Window {
+    public partial class LoginWindow : Window, INotifyPropertyChanged {
         private static readonly string HistoryFilePath;
         private List<string> _vaultLocations;
-        private ObservableCollection<ComboBoxItem> _locationBoxItems;
+        private readonly ObservableCollection<ComboBoxItem> _locationBoxItems;
+        private int _selectedLocationIndex = -1;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public int SelectedLocationItemIndex
+        {
+            get {
+                return _selectedLocationIndex;
+            }
+
+            set {
+                _selectedLocationIndex = value;
+                OnPropertyChanged();
+            }
+        }
 
         static LoginWindow()
         {
@@ -33,19 +51,20 @@ namespace EasyKeeper {
         public LoginWindow()
         {
             InitializeComponent();
+            DataContext = this;
 
             LoadVaultLocationFromHistory();
             var locationItems = from location in _vaultLocations
                                 select new ComboBoxItem { Content = location };
             _locationBoxItems = new ObservableCollection<ComboBoxItem>(locationItems);
             var chooseLocationItem = new ComboBoxItem { FontStyle = FontStyles.Italic,
-                                                        Content = "Choose a Location..." };
+                                                        Content = FindResource("ChooseLocation") };
             _locationBoxItems.Add(chooseLocationItem);
             VaultLocationList.ItemsSource = _locationBoxItems;
 
             // If there are locations in history, display the first of them.
             if (_vaultLocations.Count != 0) {
-                VaultLocationList.SelectedIndex = 0;
+                SelectedLocationItemIndex = 0;
             }
         }
 
@@ -54,7 +73,7 @@ namespace EasyKeeper {
             var locationBox = ((ComboBox)sender);
             // When `choose a location` item is selected, display an open-file dialog for
             // choosing another vault.
-            if (locationBox.SelectedIndex == locationBox.Items.Count - 1) {
+            if (SelectedLocationItemIndex == locationBox.Items.Count - 1) {
                 var dlg = new Win32.OpenFileDialog {
                     DefaultExt = ".ekp",
                     Filter = "EasyKeeper vault (*.ekp)|*.ekp"
@@ -62,7 +81,7 @@ namespace EasyKeeper {
 
                 bool? result = dlg.ShowDialog();
                 if (result != true) {
-                    locationBox.SelectedIndex = -1;
+                    SelectedLocationItemIndex = -1;
                     return;
                 }
 
@@ -78,7 +97,7 @@ namespace EasyKeeper {
                     index = 0;
                 }
 
-                locationBox.SelectedIndex = index;
+                SelectedLocationItemIndex = index;
             }
         }
 
@@ -97,13 +116,15 @@ namespace EasyKeeper {
                 return;
             }
 
-            var appDataDir = Path.GetDirectoryName(HistoryFilePath);
-            Debug.Assert(appDataDir != null, "appDataDir cannot be null");
-            if (!Directory.Exists(appDataDir)) {
-                Directory.CreateDirectory(appDataDir);
-            }
+            Task.Run(() => {
+                var appDataDir = Path.GetDirectoryName(HistoryFilePath);
+                Debug.Assert(appDataDir != null, "appDataDir cannot be null");
+                if (!Directory.Exists(appDataDir)) {
+                    Directory.CreateDirectory(appDataDir);
+                }
 
-            File.WriteAllLines(HistoryFilePath, _vaultLocations, Encoding.UTF8);
+                File.WriteAllLines(HistoryFilePath, _vaultLocations, Encoding.UTF8);
+            });
         }
 
         private void NewVault_Click(object sender, RoutedEventArgs e)
@@ -119,7 +140,83 @@ namespace EasyKeeper {
             }
 
             var newVaultPath = dlg.FileName;
-            Debug.WriteLine(newVaultPath);
+
+            var setupPasswordDlg = new InputPasswordDialog();
+            result = setupPasswordDlg.ShowDialog();
+            if (result != true) {
+                return;
+            }
+
+            var newVaultPassword = setupPasswordDlg.NewVaultPassword;
+
+            _vaultLocations.Insert(0, newVaultPath);
+            _locationBoxItems.Insert(0, new ComboBoxItem { Content = newVaultPath });
+
+            SaveVaultLocationHistory();
+
+            var passwordVault = VaultLoader.FromNew(newVaultPath, newVaultPassword);
+            // create an instance of VaultViewWindow(passwordVault)
+
+            // TODO: hide login window
+            SelectedLocationItemIndex = 0;
+        }
+
+        private void OpenVault_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedLocationItemIndex == -1) {
+                MessageBox.Show((string)FindResource("NoVaultSelected"), "Error",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (Password.Password == string.Empty) {
+                MessageBox.Show((string)FindResource("NoPasswordGiven"), "Error",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                Password.Focus();
+                return;
+            }
+
+            var selectedPath = (string)_locationBoxItems[SelectedLocationItemIndex].Content;
+            if (!File.Exists(selectedPath)) {
+                var result = MessageBox.Show((string)FindResource("VaultNotFound"), "Error",
+                                             MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes) {
+                    _locationBoxItems.RemoveAt(SelectedLocationItemIndex);
+                    // This location may not in the history.
+                    if (_vaultLocations.Remove(selectedPath)) {
+                        SaveVaultLocationHistory();
+                    }
+                }
+
+                SelectedLocationItemIndex = -1;
+                Password.Password = "";
+
+                return;
+            }
+
+            MoveVaultLocationToTop(selectedPath);
+            _locationBoxItems.Move(SelectedLocationItemIndex, 0);
+
+            SaveVaultLocationHistory();
+
+            var passwordVault = VaultLoader.FromProvided(selectedPath, Password.Password);
+            // create an instance of VaultViewWindow(passwordVault)
+
+            // TODO: hide login window
+            SelectedLocationItemIndex = 0;
+        }
+
+        private void MoveVaultLocationToTop(string selectedPath)
+        {
+            _vaultLocations.Remove(selectedPath);
+            _vaultLocations.Insert(0, selectedPath);
+        }
+
+        private void OnPropertyChanged([CallerMemberName]string propertyName = "")
+        {
+            if (PropertyChanged != null) {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
     }
 }
