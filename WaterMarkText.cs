@@ -1,5 +1,5 @@
 ﻿/*
- @ Kingsley Chen
+ @ 0xCCCCCCCC
 */
 
 using System.Windows;
