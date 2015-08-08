@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ @ 0xCCCCCCCC
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,14 +17,12 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace EasyKeeper
-{
+namespace EasyKeeper {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for VaultViewWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
-    {
-        public MainWindow()
+    public partial class VaultViewWindow : Window {
+        public VaultViewWindow()
         {
             InitializeComponent();
         }
