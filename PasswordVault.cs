@@ -1,54 +1,80 @@
 /*
- @ Kingsley Chen
+ @ 0xCCCCCCCC
 */
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace EasyKeeper {
     public class PasswordVault {
-        private string _path;
-        private string _accessPassword;
-        private AccountStore _accountStore;
+        private readonly string _path;
+        private readonly string _accessPassword;
+        private readonly SortedSet<AccountInfo> _accountData;
 
         // Builds a brand new vault.
-        public PasswordVault(string storePath, string accessPassword)
+        public PasswordVault(string vaultPath, string accessPassword)
         {
-            _path = storePath;
+            _path = vaultPath;
             _accessPassword = accessPassword;
-            _accountStore = new AccountStore();
+            _accountData = new SortedSet<AccountInfo>();
         }
 
         // Builds a vault from a given source.
-        public PasswordVault(string storePath, string accessPassword, Stream stream)
+        public PasswordVault(string vaultPath, string accessPassword, Stream stream)
         {
-            _path = storePath;
+            _path = vaultPath;
             _accessPassword = accessPassword;
-            _accountStore = VaultMarshal.Unmarshal(stream, accessPassword);
+            _accountData = VaultMarshal.Unmarshal(stream, accessPassword);
         }
 
-        public void StoreAsync()
+        public void Save()
         {
             Task.Run(() => {
                 using (var fs = new FileStream(_path, FileMode.Create)) {
-                    VaultMarshal.Marshal(_accessPassword, _accountStore, fs);
+                    VaultMarshal.Marshal(_accessPassword, _accountData, fs);
                 }
             });
         }
 
         public bool AddAccountInfo(string label, string username, string password)
         {
-            return _accountStore.AddAccountInfo(label, username, password);
+            return _accountData.Add(new AccountInfo(label, username, password));
         }
 
         public void RemoveAccountInfo(string label)
         {
-            _accountStore.RemoveAccountInfo(label);
+            _accountData.Remove(new AccountInfo(label));
+        }
+    }
+
+    [Serializable]
+    public class AccountInfo : IComparable<AccountInfo> {
+        // Use `TimeCreated` to keep each record in a relative order of sequence as it was added,
+        // which is appropriate when being displayed.
+        public long TimeCreated { get; set; }
+        public string Label { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+
+        // This constructor is used for locating the item to be removed from data.
+        public AccountInfo(string label)
+        {
+            Label = label;
         }
 
-        public void UpdateAccountInfo(string label, string newUsername, string newPassword)
+        public AccountInfo(string label, string username, string password)
         {
-            _accountStore.UpdateAccountInfo(label, newUsername, newPassword);
+            Label = label;
+            UserName = username;
+            Password = password;
+            TimeCreated = DateTime.UtcNow.Ticks;
+        }
+
+        public int CompareTo(AccountInfo other)
+        {
+            return string.Compare(Label, other.Label, StringComparison.Ordinal);
         }
     }
 }

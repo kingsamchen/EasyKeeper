@@ -1,8 +1,9 @@
 /*
- @ Kingsley Chen
+ @ 0xCCCCCCCC
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -20,24 +21,24 @@ namespace EasyKeeper {
     public static class VaultMarshal {
         private const uint ProtocolVersion = 1U;
 
-        public static void Marshal(string pwd, AccountStore store, Stream outStream)
+        public static void Marshal(string pwd, SortedSet<AccountInfo> accountData, Stream stream)
         {
-            var storeData = AccountStoreToBytes(store);
-            var encryptedData = EncryptStoreData(storeData, pwd);
+            var accountRawData = AccountDataToBytes(accountData);
+            var encryptedData = EncryptData(accountRawData, pwd);
             var dataSignature = Signature.FromRawData(encryptedData, Encoding.UTF8.GetBytes(pwd));
             var payload = BitConverter.GetBytes(ProtocolVersion).Concat(dataSignature.Data)
                                                                 .Concat(encryptedData)
                                                                 .ToArray();
-            var dataChecksum = Checksum.FromRawData(payload);
-            using (var writer = new BinaryWriter(outStream)) {
+            using (var writer = new BinaryWriter(stream)) {
+                var dataChecksum = Checksum.FromRawData(payload);
                 writer.Write(dataChecksum.Data);
                 writer.Write(payload);
             }
         }
 
-        public static AccountStore Unmarshal(Stream inStream, string pwd)
+        public static SortedSet<AccountInfo> Unmarshal(Stream stream, string pwd)
         {
-            using (var reader = new BinaryReader(inStream)) {
+            using (var reader = new BinaryReader(stream)) {
                 var checksumRead = Checksum.FromData(reader.ReadBytes(Checksum.HashSizeInBytes));
                 var protocolVersion = reader.ReadUInt32();
                 var signatureRead = Signature.FromData(reader.ReadBytes(Signature.HashSizeInBytes));
@@ -63,47 +64,47 @@ namespace EasyKeeper {
                 }
 
                 // Incorrect password would cause the following invocation to throw an exception,
-                // but because it could happen only if somebody hacked the code and bypassed the
+                // but since it could happen only if somebody hacked the code and bypassed the
                 // authentication, so, just let it be.
-                var storeData = DecryptStoreData(encryptedData, pwd);
-                var store = AccountStoreFromBytes(storeData);
+                var rawData = DecryptData(encryptedData, pwd);
+                var accountData = AccountDataFromBytes(rawData);
 
-                return store;
+                return accountData;
             }
         }
 
-        private static byte[] AccountStoreToBytes(AccountStore store)
+        private static byte[] AccountDataToBytes(SortedSet<AccountInfo> accountdata)
         {
             using (MemoryStream mem = new MemoryStream()) {
                 IFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(mem, store);
+                formatter.Serialize(mem, accountdata);
                 return mem.ToArray();
             }
         }
 
-        private static AccountStore AccountStoreFromBytes(byte[] rawBytes)
+        private static SortedSet<AccountInfo> AccountDataFromBytes(byte[] rawBytes)
         {
             using (MemoryStream mem = new MemoryStream(rawBytes)) {
                 IFormatter formatter = new BinaryFormatter();
-                var accountStore = formatter.Deserialize(mem) as AccountStore;
-                return accountStore;
+                var accountData = formatter.Deserialize(mem) as SortedSet<AccountInfo>;
+                return accountData;
             }
         }
 
-        private static byte[] EncryptStoreData(byte[] storeData, string userPassword)
+        private static byte[] EncryptData(byte[] rawData, string userPassword)
         {
             using (var crypto = CreateCrypto(userPassword))
             using (var mem = new MemoryStream())
             using (var encryptor = new CryptoStream(mem, crypto.CreateEncryptor(),
                                                     CryptoStreamMode.Write)) {
-                encryptor.Write(storeData, 0, storeData.Length);
+                encryptor.Write(rawData, 0, rawData.Length);
                 encryptor.FlushFinalBlock();
 
                 return mem.ToArray();
             }
         }
 
-        private static byte[] DecryptStoreData(byte[] encrypted, string userPassword)
+        private static byte[] DecryptData(byte[] encrypted, string userPassword)
         {
             using (var crypto = CreateCrypto(userPassword))
             using (var mem = new MemoryStream())

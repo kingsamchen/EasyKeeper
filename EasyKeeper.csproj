@@ -71,7 +71,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AccountStore.cs" />
     <Compile Include="InputPasswordDialog.xaml.cs">
       <DependentUpon>InputPasswordDialog.xaml</DependentUpon>
     </Compile>

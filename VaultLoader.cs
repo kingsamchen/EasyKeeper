@@ -1,5 +1,5 @@
 /*
- @ Kingsley Chen
+ @ 0xCCCCCCCC
 */
 
 using System.IO;
@@ -16,7 +16,7 @@ namespace EasyKeeper {
         public static PasswordVault FromNew(string path, string password)
         {
             var vault = new PasswordVault(path, password);
-            vault.StoreAsync();
+            vault.Save();
 
             return vault;
         }

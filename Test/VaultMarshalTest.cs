@@ -1,8 +1,9 @@
 /*
- @ Kingsley Chen
+ @ 0xCCCCCCCC
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,7 +50,7 @@ namespace Test {
         public void TestMarshal()
         {
             string pwd = "kc123";
-            AccountStore store = new AccountStore();
+            SortedSet<AccountInfo> store = new SortedSet<AccountInfo>();
             byte[] data = null;
 
             using (MemoryStream mem = new MemoryStream()) {
@@ -83,7 +84,7 @@ namespace Test {
             }
         }
 
-        private AccountStore TryUnmarsal(byte[] data, string pwd)
+        private SortedSet<AccountInfo> TryUnmarsal(byte[] data, string pwd)
         {
             using (MemoryStream mem = new MemoryStream(data)) {
                 var storeGet = VaultMarshal.Unmarshal(mem, pwd);
