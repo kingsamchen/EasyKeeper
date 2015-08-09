@@ -38,6 +38,12 @@ namespace EasyKeeper {
             });
         }
 
+        // Exposed to ViewModel.
+        public IEnumerable<AccountInfo> AsAccountInfoEnumerable()
+        {
+            return _accountData;
+        }
+
         public bool AddAccountInfo(string label, string username, string password)
         {
             return _accountData.Add(new AccountInfo(label, username, password));
