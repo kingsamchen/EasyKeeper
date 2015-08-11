@@ -16,9 +16,9 @@
                         </Storyboard>
                     </ControlTemplate.Resources>
                     <Border Name="Bd"
-							Background="{TemplateBinding Background}"
-							BorderBrush="{TemplateBinding BorderBrush}"
-							BorderThickness="{TemplateBinding BorderThickness}">
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid>
                             <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Margin="1" />
                             <TextBlock x:Name="Message" FontStyle="Italic" FontSize="14"
@@ -54,5 +54,11 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+    <ItemsPanelTemplate x:Key="MenuItemPanelTemplate">
+        <StackPanel Margin="-20,0,0,0" Background="White"/>
+    </ItemsPanelTemplate>
+    <Style TargetType="{x:Type ContextMenu}">
+        <Setter Property="ItemsPanel" Value="{StaticResource MenuItemPanelTemplate}"/>
     </Style>
 </ResourceDictionary>
