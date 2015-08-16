@@ -71,6 +71,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="EditAccountDialog.xaml.cs">
+      <DependentUpon>EditAccountDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="InputPasswordDialog.xaml.cs">
       <DependentUpon>InputPasswordDialog.xaml</DependentUpon>
     </Compile>
@@ -80,6 +83,10 @@
     <Compile Include="VaultMarshal.cs" />
     <Compile Include="VaultViewModel.cs" />
     <Compile Include="WaterMarkText.cs" />
+    <Page Include="EditAccountDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="InputPasswordDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -155,7 +162,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="res\Edit.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="res\Question.png" />
   </ItemGroup>
