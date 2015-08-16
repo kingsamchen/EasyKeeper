@@ -5,9 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EasyKeeper {
+    // PasswordVault plays the role of data model.
     public class PasswordVault {
         private readonly string _path;
         private readonly string _accessPassword;
@@ -44,14 +46,21 @@ namespace EasyKeeper {
             return _accountData;
         }
 
-        public bool AddAccountInfo(string label, string username, string password)
+        public void AddAccountInfo(string label, string username, string password)
         {
-            return _accountData.Add(new AccountInfo(label, username, password));
+            _accountData.Add(new AccountInfo(label, username, password));
+        }
+
+        public void UpdateAccountInfo(string label, string username, string password)
+        {
+            var accountInfo = _accountData.First(info => info.Label == label);
+            accountInfo.UserName = username;
+            accountInfo.Password = password;
         }
 
         public void RemoveAccountInfo(string label)
         {
-            _accountData.Remove(new AccountInfo(label));
+            _accountData.RemoveWhere(info => info.Label == label);
         }
     }
 
