@@ -11,13 +11,13 @@
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
-        <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" ItemsSource="{Binding AccountsView}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0,1,1,1"
+        <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" ItemsSource="{Binding AccountsView}" SelectedIndex="{Binding SelectedAccountId}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0,1,1,1"
                   CanUserReorderColumns="False" CanUserSortColumns="False" MinColumnWidth="30" HeadersVisibility="Column" IsReadOnly="True" FontSize="14">
             <DataGrid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="New"/>
-                    <MenuItem Header="Edit"/>
-                    <MenuItem Header="Delete"/>
+                    <MenuItem Header="New" Command="{Binding NewAccountCommand}" />
+                    <MenuItem Header="Edit" Command="{Binding ModifyAccountCommand}" CommandParameter="{Binding SelectedAccountId}"/>
+                    <MenuItem Header="Delete" Command="{Binding RemoveAccountCommand}" CommandParameter="{Binding SelectedAccountId}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

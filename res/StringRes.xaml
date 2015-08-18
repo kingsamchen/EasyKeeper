@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:EasyKeeper"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
@@ -12,4 +12,5 @@
     <sys:String x:Key="ModifyAccountTitle">EasyKeeper - Modify an Existing Account</sys:String>
     <sys:String x:Key="AccountInfoIncomplete">Please provide your account information!</sys:String>
     <sys:String x:Key="TagAlreadyExists">Account with the given tag already exists!</sys:String>
+    <sys:String x:Key="ConfirmDeleteAccount">Are you sure to remove this record?</sys:String>
 </ResourceDictionary>
