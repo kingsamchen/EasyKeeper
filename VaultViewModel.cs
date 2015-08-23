@@ -15,8 +15,10 @@ namespace EasyKeeper {
         public event PropertyChangedEventHandler PropertyChanged;
 
         private readonly PasswordVault _vault;
+        private bool _vaultDataChanged;
         private ObservableCollection<AccountInfoView> _accountsView;
         private int _selectedAccountId = -1;
+        private RelayCommand<object> _windowClosingCommand;
         private RelayCommand<object> _newAccountCommand;
         private RelayCommand<int?> _modifyAccountCommand;
         private RelayCommand<int?> _removeAccountCommand;
@@ -77,6 +79,7 @@ namespace EasyKeeper {
                             _accountsView.Add(newAccount);
                             _vault.AddAccountInfo(newAccount.Label, newAccount.UserName,
                                                   newAccount.Password);
+                            _vaultDataChanged = true;
                         }
                     });
                 }
@@ -103,7 +106,7 @@ namespace EasyKeeper {
                             accountInfo.Password = viewModel.Password;
                             _vault.UpdateAccountInfo(accountInfo.Label, accountInfo.UserName,
                                                      accountInfo.Password);
-
+                            _vaultDataChanged = true;
                         }
                     }, selectedId => selectedId != null && selectedId != -1);
                 }
@@ -127,11 +130,27 @@ namespace EasyKeeper {
                             _accountsView.RemoveAt(index);
                             FixAccountIdAfterRemoval(index);
                             _vault.RemoveAccountInfo(accountInfo.Label);
+                            _vaultDataChanged = true;
                         }
                     }, selectedId => selectedId != null && selectedId != -1);
                 }
 
                 return _removeAccountCommand;
+            }
+        }
+
+        public ICommand WindowClosing
+        {
+            get {
+                if (_windowClosingCommand == null) {
+                    _windowClosingCommand = new RelayCommand<object>(param => {
+                        if (_vaultDataChanged) {
+                            _vault.Save().Wait();
+                        }
+                    });
+                }
+
+                return _windowClosingCommand;
             }
         }
 

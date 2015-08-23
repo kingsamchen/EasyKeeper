@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="EasyKeeper.VaultViewWindow"
+        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         Title="EasyKeeper - Vault Viewer" Height="442" Width="729" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <ResourceDictionary>
@@ -10,8 +11,13 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding WindowClosing}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Grid>
-        <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" ItemsSource="{Binding AccountsView}" SelectedIndex="{Binding SelectedAccountId}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0,1,1,1"
+        <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding AccountsView}" SelectedIndex="{Binding SelectedAccountId}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderThickness="0,1,1,1"
                   CanUserReorderColumns="False" CanUserSortColumns="False" MinColumnWidth="30" HeadersVisibility="Column" IsReadOnly="True" FontSize="14">
             <DataGrid.ContextMenu>
                 <ContextMenu>

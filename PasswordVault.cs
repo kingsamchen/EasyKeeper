@@ -31,9 +31,10 @@ namespace EasyKeeper {
             _accountData = VaultMarshal.Unmarshal(stream, accessPassword);
         }
 
-        public void Save()
+        // It's up to the caller to decide whether to wait until this function completes.
+        public Task Save()
         {
-            Task.Run(() => {
+            return Task.Run(() => {
                 using (var fs = new FileStream(_path, FileMode.Create)) {
                     VaultMarshal.Marshal(_accessPassword, _accountData, fs);
                 }
