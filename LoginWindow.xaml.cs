@@ -17,11 +17,7 @@ using System.Windows.Controls;
 
 using Win32 = Microsoft.Win32;
 
-
 namespace EasyKeeper {
-    /// <summary>
-    /// Interaction logic for LoginWindow.xaml
-    /// </summary>
     public partial class LoginWindow : Window, INotifyPropertyChanged {
         private static readonly string HistoryFilePath;
         private List<string> _vaultLocations;
@@ -151,14 +147,14 @@ namespace EasyKeeper {
 
             _vaultLocations.Insert(0, newVaultPath);
             _locationBoxItems.Insert(0, new ComboBoxItem { Content = newVaultPath });
+            SelectedLocationItemIndex = 0;
 
             SaveVaultLocationHistory();
 
             var passwordVault = VaultLoader.FromNew(newVaultPath, newVaultPassword);
-            // create an instance of VaultViewWindow(passwordVault)
-
-            // TODO: hide login window
-            SelectedLocationItemIndex = 0;
+            var vaultViewer = new VaultViewWindow(new VaultViewModel(passwordVault));
+            vaultViewer.Show();
+            Close();
         }
 
         private void OpenVault_Click(object sender, RoutedEventArgs e)
@@ -196,14 +192,20 @@ namespace EasyKeeper {
 
             MoveVaultLocationToTop(selectedPath);
             _locationBoxItems.Move(SelectedLocationItemIndex, 0);
+            SelectedLocationItemIndex = 0;
 
             SaveVaultLocationHistory();
 
-            var passwordVault = VaultLoader.FromProvided(selectedPath, Password.Password);
-            // create an instance of VaultViewWindow(passwordVault)
-
-            // TODO: hide login window
-            SelectedLocationItemIndex = 0;
+            try {
+                var passwordVault = VaultLoader.FromProvided(selectedPath, Password.Password);
+                var vaultViewer = new VaultViewWindow(new VaultViewModel(passwordVault));
+                vaultViewer.Show();
+                Close();
+            } catch (IncorrectPassword ex) {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            } catch (DataCorruptedException ex) {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void MoveVaultLocationToTop(string selectedPath)
