@@ -1,0 +1,26 @@
+<Window x:Class="EasyKeeper.EditAccountDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EasyKeeper"
+        mc:Ignorable="d" Height="291" Width="488" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" Title="{Binding DialogTitle}" ShowInTaskbar="False">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="res/StringRes.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BitmapImage x:Key="EditIcon" UriSource="res/Edit.png"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="0,0,4,1" Height="261" VerticalAlignment="Bottom">
+        <TextBlock HorizontalAlignment="Left" Margin="55,36,0,0" TextWrapping="Wrap" Text="Your Tag for the account" FontSize="14" VerticalAlignment="Top"/>
+        <TextBox Text="{Binding Tag}" IsReadOnly="{Binding TagReadOnly}" FontSize="14" HorizontalAlignment="Left" Height="23" Margin="55,60,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245"/>
+        <TextBlock HorizontalAlignment="Left" Margin="55,100,0,0" TextWrapping="Wrap" Text="Your UserName for the account" FontSize="14" VerticalAlignment="Top"/>
+        <TextBox Text="{Binding UserName}" FontSize="14" HorizontalAlignment="Left" Height="23" Margin="55,124,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245"/>
+        <TextBlock HorizontalAlignment="Left" Margin="55,166,0,0" TextWrapping="Wrap" Text="Your Password for the account" FontSize="14" VerticalAlignment="Top"/>
+        <TextBox Text="{Binding Password}" FontSize="14" HorizontalAlignment="Left" Height="23" Margin="55,190,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245"/>
+        <Button Content="Done" HorizontalAlignment="Left" Margin="360,173,0,0" VerticalAlignment="Top" Width="85" Height="40" FontSize="14" Click="EditDone_Click"/>
+        <Image Source="{StaticResource EditIcon}" HorizontalAlignment="Left" Height="100" Margin="360,36,0,0" VerticalAlignment="Top" Width="100"/>
+    </Grid>
+</Window>
