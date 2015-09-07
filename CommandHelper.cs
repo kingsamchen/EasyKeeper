@@ -39,7 +39,9 @@ namespace EasyKeeper {
     // Unlike uses of RelayCommand, these commands are manually invoked.
     class ExecuteCommand<T, TResult> : ICommand {
         // Unfortunately, we don't need it.
+#pragma warning disable 0067
         public event EventHandler CanExecuteChanged;
+#pragma warning restore 0067
 
         private readonly Func<T, TResult> _fn;
         private readonly Predicate<T> _canExecute;
