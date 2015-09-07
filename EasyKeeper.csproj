@@ -88,7 +88,8 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RelayCommand.cs" />
+    <Compile Include="PasswordHelperUtil.cs" />
+    <Compile Include="CommandHelper.cs" />
     <Compile Include="VaultMarshal.cs" />
     <Compile Include="VaultViewModel.cs" />
     <Compile Include="WaterMarkText.cs" />
