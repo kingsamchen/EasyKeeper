@@ -8,6 +8,7 @@
         The vault is not found on your disk. Remove it from history?
     </sys:String>
     <sys:String x:Key="NoPasswordGiven">Please enter your password!</sys:String>
+    <sys:String x:Key="PasswordMismatch">Two passwords don't match!</sys:String>
     <sys:String x:Key="AddAccountTitle">EasyKeeper - Add a New Account</sys:String>
     <sys:String x:Key="ModifyAccountTitle">EasyKeeper - Modify an Existing Account</sys:String>
     <sys:String x:Key="AccountInfoIncomplete">Please provide your account information!</sys:String>

@@ -6,11 +6,9 @@ using System.Windows;
 
 namespace EasyKeeper {
     public partial class VaultViewWindow : Window {
-        public VaultViewWindow(VaultViewModel viewModel)
+        public VaultViewWindow()
         {
             InitializeComponent();
-
-            DataContext = viewModel;
         }
     }
 }

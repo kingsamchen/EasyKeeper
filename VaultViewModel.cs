@@ -11,9 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 
 namespace EasyKeeper {
-    public class VaultViewModel : INotifyPropertyChanged {
-        public event PropertyChangedEventHandler PropertyChanged;
-
+    public class VaultViewModel : BindableObject {
         private readonly PasswordVault _vault;
         private bool _vaultDataChanged;
         private ObservableCollection<AccountInfoView> _accountsView;
@@ -56,7 +54,7 @@ namespace EasyKeeper {
 
             set {
                 _selectedAccountId = value;
-                OnPropertyChanged();
+                RaisePropertyChanged();
             }
         }
 
@@ -151,13 +149,6 @@ namespace EasyKeeper {
                 }
 
                 return _windowClosingCommand;
-            }
-        }
-
-        private void OnPropertyChanged([CallerMemberName]string propertyName = "")
-        {
-            if (PropertyChanged != null) {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
 
