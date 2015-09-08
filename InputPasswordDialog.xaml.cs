@@ -15,16 +15,13 @@ namespace EasyKeeper {
 
         private void SetupButton_Click(object sender, RoutedEventArgs e)
         {
-            if (VaultPasswordBox.SecurePassword.Empty() ||
-                ConfirmedVaultPasswordBox.SecurePassword.Empty()) {
+            if (Password.SecurePassword.Empty() || ConfirmedPassword.SecurePassword.Empty()) {
                 MessageBox.Show((string)FindResource("NoPasswordGiven"), "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // TODO: add support for securestring equality
-            if (VaultPasswordBox.SecurePassword.ConvertToUnsecureString() !=
-                ConfirmedVaultPasswordBox.SecurePassword.ConvertToUnsecureString()) {
+            if (!Password.SecurePassword.ValueEquals(ConfirmedPassword.SecurePassword)) {
                 MessageBox.Show((string)FindResource("PasswordMismatch"), "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -32,7 +29,7 @@ namespace EasyKeeper {
 
             var vm = DataContext as SetupPasswordViewModel;
             Debug.Assert(vm != null, "DataContext != null");
-            vm.NewVaultPassword = VaultPasswordBox.SecurePassword;
+            vm.NewVaultPassword = Password.SecurePassword;
 
             DialogResult = true;
         }
