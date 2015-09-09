@@ -4,6 +4,7 @@
 
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 
 namespace EasyKeeper {
     public partial class EditAccountDialog : Window {
@@ -25,10 +26,14 @@ namespace EasyKeeper {
                 return;
             }
 
-            if (!viewModel.TagReadOnly && viewModel.IsTagAlreadyExisted()) {
-                MessageBox.Show((string)Application.Current.FindResource("TagAlreadyExists"),
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+            if (!viewModel.TagReadOnly) {
+                var cmd = (ExecuteCommand<object, bool>)viewModel.CheckTagExistedCommand;
+                cmd.Execute(null);
+                if (cmd.Result) {
+                    MessageBox.Show((string)Application.Current.FindResource("TagAlreadyExists"),
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
             }
 
             DialogResult = true;
@@ -43,6 +48,7 @@ namespace EasyKeeper {
 
         private readonly ViewType _type;
         private readonly PasswordVault _vault;
+        private ExecuteCommand<object, bool> _checkTagExistedCommand;
 
         public EditAccountViewModel(PasswordVault vault)
         {
@@ -81,9 +87,14 @@ namespace EasyKeeper {
 
         // Make sure there is no account info which has the same label as the one we
         // are going to add has, since we regard label as the key of an account info.
-        public bool IsTagAlreadyExisted()
+        public ICommand CheckTagExistedCommand
         {
-            return _vault.AsAccountInfoEnumerable().Any(info => info.Label == Tag);
+            get {
+                return _checkTagExistedCommand ??
+                      (_checkTagExistedCommand = new ExecuteCommand<object, bool>(param => {
+                          return _vault.AsAccountInfoEnumerable().Any(info => info.Label == Tag);
+                       }));
+            }
         }
     }
 }

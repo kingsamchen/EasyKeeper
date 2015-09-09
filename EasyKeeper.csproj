@@ -54,6 +54,9 @@
   <PropertyGroup>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>EasyKeeper.App</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -75,6 +78,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="BindableObject.cs" />
     <Compile Include="EditAccountDialog.xaml.cs">
       <DependentUpon>EditAccountDialog.xaml</DependentUpon>
     </Compile>
@@ -84,7 +88,8 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RelayCommand.cs" />
+    <Compile Include="PasswordHelperUtil.cs" />
+    <Compile Include="CommandHelper.cs" />
     <Compile Include="VaultMarshal.cs" />
     <Compile Include="VaultViewModel.cs" />
     <Compile Include="WaterMarkText.cs" />

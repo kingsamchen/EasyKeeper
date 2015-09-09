@@ -3,12 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="EasyKeeper.VaultViewWindow"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+        xmlns:l="clr-namespace:EasyKeeper"
         Title="EasyKeeper - Vault Viewer" Height="442" Width="729" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="res/Resources.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <l:EditableConverter x:Key="EditableConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <i:Interaction.Triggers>
@@ -21,8 +23,8 @@
                   CanUserReorderColumns="False" CanUserSortColumns="False" MinColumnWidth="30" HeadersVisibility="Column" IsReadOnly="True" FontSize="14">
             <DataGrid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="New" Command="{Binding NewAccountCommand}" />
-                    <MenuItem Header="Edit" Command="{Binding ModifyAccountCommand}" CommandParameter="{Binding SelectedAccountId}"/>
+                    <MenuItem Header="New" Click="New_Click"/>
+                    <MenuItem Header="Edit" Click="Edit_Click" IsEnabled="{Binding Path=SelectedAccountId, Converter={StaticResource EditableConverter}}"/>
                     <MenuItem Header="Delete" Command="{Binding RemoveAccountCommand}" CommandParameter="{Binding SelectedAccountId}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
