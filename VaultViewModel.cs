@@ -3,10 +3,8 @@
 */
 
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 
@@ -17,8 +15,8 @@ namespace EasyKeeper {
         private ObservableCollection<AccountInfoView> _accountsView;
         private int _selectedAccountId = -1;
         private RelayCommand<object> _windowClosingCommand;
-        private RelayCommand<object> _newAccountCommand;
-        private RelayCommand<int?> _modifyAccountCommand;
+        private ExecuteCommand<EditAccountViewModel, object> _newAccountCommand;
+        private ExecuteCommand<EditAccountViewModel, object> _modifyAccountCommand;
         private RelayCommand<int?> _removeAccountCommand;
 
         public VaultViewModel(PasswordVault vault)
@@ -58,58 +56,63 @@ namespace EasyKeeper {
             }
         }
 
+        public EditAccountViewModel NewAccountViewModel
+        {
+            get {
+                return new EditAccountViewModel(_vault);
+            }
+        }
+
+        public EditAccountViewModel ModifyAccountViewModel
+        {
+            get {
+                if (SelectedAccountId == -1) {
+                    return null;
+                }
+
+                var accountInfo = _accountsView[SelectedAccountId];
+                return new EditAccountViewModel(accountInfo.Label, accountInfo.UserName,
+                                                accountInfo.Password, _vault);
+            }
+        }
+
         public ICommand NewAccountCommand
         {
             get {
-                if (_newAccountCommand == null) {
-                    _newAccountCommand = new RelayCommand<object>(param => {
-                        var viewModel = new EditAccountViewModel(_vault);
-                        var dlg = new EditAccountDialog(viewModel);
-                        bool? rv = dlg.ShowDialog();
-                        if (rv == true) {
-                            var newAccount = new AccountInfoView() {
-                                Id = _accountsView.Count + 1,
-                                Label = viewModel.Tag,
-                                UserName = viewModel.UserName,
-                                Password = viewModel.Password
-                            };
+                return _newAccountCommand ??
+                      (_newAccountCommand = new ExecuteCommand<EditAccountViewModel, object>(vm => {
+                          var newAccount = new AccountInfoView {
+                              Id = _accountsView.Count + 1,
+                              Label = vm.Tag,
+                              UserName = vm.UserName,
+                              Password = vm.Password
+                          };
 
-                            _accountsView.Add(newAccount);
-                            _vault.AddAccountInfo(newAccount.Label, newAccount.UserName,
-                                                  newAccount.Password);
-                            _vaultDataChanged = true;
-                        }
-                    });
-                }
+                          _accountsView.Add(newAccount);
+                          _vault.AddAccountInfo(newAccount.Label, newAccount.UserName,
+                                                newAccount.Password);
+                          _vaultDataChanged = true;
 
-                return _newAccountCommand;
+                          return null;
+                       }));
             }
         }
 
         public ICommand ModifyAccountCommand
         {
             get {
-                if (_modifyAccountCommand == null) {
-                    _modifyAccountCommand = new RelayCommand<int?>(selectedId => {
-                        Debug.Assert(selectedId != null, "selectedId cannot be null");
-                        var accountInfo = _accountsView[(int)selectedId];
-                        var viewModel = new EditAccountViewModel(accountInfo.Label,
-                                                                 accountInfo.UserName,
-                                                                 accountInfo.Password,
-                                                                 _vault);
-                        var dlg = new EditAccountDialog(viewModel);
-                        bool? rv = dlg.ShowDialog();
-                        if (rv == true) {
-                            accountInfo.UserName = viewModel.UserName;
-                            accountInfo.Password = viewModel.Password;
-                            _vault.UpdateAccountInfo(accountInfo.Label, accountInfo.UserName,
-                                                     accountInfo.Password);
-                            _vaultDataChanged = true;
-                        }
-                    }, selectedId => selectedId != null && selectedId != -1);
-                }
+                return _modifyAccountCommand ??
+                      (_modifyAccountCommand = new ExecuteCommand<EditAccountViewModel, object>(
+                          vm => {
+                              var accountInfo = _accountsView[SelectedAccountId];
+                              accountInfo.UserName = vm.UserName;
+                              accountInfo.Password = vm.Password;
+                              _vault.UpdateAccountInfo(accountInfo.Label, accountInfo.UserName,
+                                                       accountInfo.Password);
+                              _vaultDataChanged = true;
 
-                return _modifyAccountCommand;
+                              return null;
+                          }));
             }
         }
 
@@ -161,9 +164,7 @@ namespace EasyKeeper {
     }
 
     // An adapter for vault model to view.
-    public class AccountInfoView : INotifyPropertyChanged {
-        public event PropertyChangedEventHandler PropertyChanged;
-
+    public class AccountInfoView : BindableObject {
         private int _id;
         private string _username;
         private string _password;
@@ -176,7 +177,7 @@ namespace EasyKeeper {
 
             set {
                 _id = value;
-                OnPropertyChanged();
+                RaisePropertyChanged();
             }
         }
 
@@ -190,7 +191,7 @@ namespace EasyKeeper {
 
             set {
                 _username = value;
-                OnPropertyChanged();
+                RaisePropertyChanged();
             }
         }
 
@@ -202,14 +203,7 @@ namespace EasyKeeper {
 
             set {
                 _password = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void OnPropertyChanged([CallerMemberName]string propertyName = "")
-        {
-            if (PropertyChanged != null) {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+                RaisePropertyChanged();
             }
         }
     }

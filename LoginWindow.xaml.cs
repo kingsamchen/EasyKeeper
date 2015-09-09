@@ -66,7 +66,7 @@ namespace EasyKeeper {
 
                 cmd.Execute(Password.SecurePassword);
                 Debug.Assert(cmd.Result != null, "cmd.Result != null");
-                var vaultViewer = new VaultViewWindow { DataContext = cmd.Result };
+                var vaultViewer = new VaultViewWindow(cmd.Result);
                 vaultViewer.Show();
                 Close();
             } catch (IncorrectPassword ex) {
@@ -109,7 +109,7 @@ namespace EasyKeeper {
 
             _viewModel.NewVaultCommand.Execute(info);
             Debug.Assert(cmd.Result != null, "cmd.Result != null");
-            var vaultViewer = new VaultViewWindow { DataContext = cmd.Result };
+            var vaultViewer = new VaultViewWindow(cmd.Result);
             vaultViewer.Show();
             Close();
         }
