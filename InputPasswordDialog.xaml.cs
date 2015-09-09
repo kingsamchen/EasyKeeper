@@ -1,16 +1,13 @@
-﻿/*
+/*
  @ 0xCCCCCCCC
 */
 
+using System.Diagnostics;
+using System.Security;
 using System.Windows;
 
 namespace EasyKeeper {
-    /// <summary>
-    /// Interaction logic for InputPasswordDialog.xaml
-    /// </summary>
     public partial class InputPasswordDialog : Window {
-        public string NewVaultPassword { get; private set; }
-
         public InputPasswordDialog()
         {
             InitializeComponent();
@@ -18,22 +15,27 @@ namespace EasyKeeper {
 
         private void SetupButton_Click(object sender, RoutedEventArgs e)
         {
-            if (VaultPasswordBox.Password == string.Empty ||
-                ConfirmedVaultPasswordBox.Password == string.Empty) {
-                MessageBox.Show("You are supposed to enter you password!", "Invalid Password",
+            if (Password.SecurePassword.Empty() || ConfirmedPassword.SecurePassword.Empty()) {
+                MessageBox.Show((string)FindResource("NoPasswordGiven"), "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (VaultPasswordBox.Password != ConfirmedVaultPasswordBox.Password) {
-                MessageBox.Show("Two passwords don't match!", "Wrong Confirmed Password",
+            if (!Password.SecurePassword.ValueEquals(ConfirmedPassword.SecurePassword)) {
+                MessageBox.Show((string)FindResource("PasswordMismatch"), "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            NewVaultPassword = VaultPasswordBox.Password;
+            var vm = DataContext as SetupPasswordViewModel;
+            Debug.Assert(vm != null, "DataContext != null");
+            vm.NewVaultPassword = Password.SecurePassword;
 
             DialogResult = true;
         }
+    }
+
+    class SetupPasswordViewModel : BindableObject {
+        public SecureString NewVaultPassword { get; set; }
     }
 }
